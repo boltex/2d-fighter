@@ -31,5 +31,8 @@ export function resolveHits(fighters: readonly [Fighter, Fighter]): number[] {
     a.receiveHit(bHit.def.hit, b.facing);
     hit.push(0);
   }
+  // Recoil goes last so a trade's reaction isn't overwritten by the incoming hit.
+  if (aHit?.def.hit) a.applyRecoil(aHit.def.hit, a.facing);
+  if (bHit?.def.hit) b.applyRecoil(bHit.def.hit, b.facing);
   return hit;
 }

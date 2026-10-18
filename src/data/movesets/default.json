@@ -66,8 +66,7 @@
       "hit": {
         "damage": 8,
         "hitstun": 24,
-        "impulse": { "x": 120, "y": -700 },
-        "airImpulse": { "x": 200, "y": -550 }
+        "impulse": { "x": 120, "y": -700 }
       },
       "cancelable": [{ "move": "down-towards", "percent": 25 }]
     },

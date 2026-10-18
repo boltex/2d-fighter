@@ -23,8 +23,8 @@ export class FightScene implements Scene {
 
   enter(): void {
     const [c1, c2] = this.session.characters;
-    const a = new Fighter(240, c1.color, c1.name, getMoveSet(c1.moveset));
-    const b = new Fighter(720, c2.color, c2.name, getMoveSet(c2.moveset));
+    const a = new Fighter(240, c1.color, c1.name, getMoveSet(c1.moveset), c1.mass);
+    const b = new Fighter(720, c2.color, c2.name, getMoveSet(c2.moveset), c2.mass);
     b.facing = -1;
     this.fighters = [a, b];
     this.winner = null;

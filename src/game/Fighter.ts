@@ -35,6 +35,7 @@ export class Fighter {
     readonly color: string,
     readonly name: string,
     readonly moveset: MoveSet,
+    readonly mass = 1,
   ) {}
 
   get grounded(): boolean {
@@ -71,9 +72,8 @@ export class Fighter {
   }
 
   receiveHit(hit: HitData, attackerFacing: Facing): void {
-    const impulse = !this.grounded && hit.airImpulse ? hit.airImpulse : hit.impulse;
-    this.vx = impulse.x * attackerFacing;
-    this.vy = impulse.y;
+    this.vx = (hit.impulse.x * attackerFacing) / this.mass;
+    this.vy = hit.impulse.y / this.mass;
     this.health = Math.max(0, this.health - hit.damage);
     this.state = "hitstun";
     this.stunTimer = hit.hitstun;
@@ -81,6 +81,16 @@ export class Fighter {
     // Getting hit wipes the move in progress and every pre-input.
     this.current = null;
     this.queue = [];
+  }
+
+  // Equal and opposite reaction to a hit this fighter landed. Standing on the ground
+  // absorbs most of it: friction eats the horizontal part and the floor cancels any
+  // push into it. In the air nothing resists, so the reaction is exact.
+  applyRecoil(hit: HitData, attackerFacing: Facing): void {
+    const grip = this.grounded ? PHYSICS.groundRecoil : 1;
+    this.vx += (-hit.impulse.x * attackerFacing * grip) / this.mass;
+    const ry = (-hit.impulse.y * grip) / this.mass;
+    this.vy += this.grounded ? Math.min(0, ry) : ry;
   }
 
   hurtboxes(): Box[] {

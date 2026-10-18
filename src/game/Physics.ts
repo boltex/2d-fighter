@@ -9,6 +9,9 @@ export const STEP = 1 / TICKS_PER_SECOND;
 export const PHYSICS = {
   gravity: 2400,
   groundFriction: 2500,
+  // Share of the horizontal reaction force that reaches an attacker standing on the
+  // ground (friction absorbs the rest). Airborne attackers receive all of it.
+  groundRecoil: 0.15,
   knockdownTicks: 40,
   maxQueue: 4,
 };

@@ -33,12 +33,11 @@ export interface Vec {
 export interface HitData {
   damage: number;
   hitstun: number; // ticks
-  // Velocity given to the defender. x points away from the attacker (it is mirrored
-  // by the attacker's facing), y is negative for upward.
+  // Impulse (momentum) exchanged by the hit, as the velocity change a mass-1 defender
+  // receives. x points away from the attacker (mirrored by the attacker's facing),
+  // y is negative for upward. The defender's velocity changes by impulse / mass, and
+  // the attacker is pushed back with the opposite vector (see Combat.ts).
   impulse: Vec;
-  // Used instead of `impulse` when the defender is airborne. Nothing slows a
-  // horizontal push in the air, so it carries further than on the ground.
-  airImpulse?: Vec;
   hitsAirborne?: boolean; // default true
 }
 
