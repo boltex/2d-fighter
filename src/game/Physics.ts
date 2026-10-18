@@ -12,6 +12,11 @@ export const PHYSICS = {
   // Share of the horizontal reaction force that reaches an attacker standing on the
   // ground (friction absorbs the rest). Airborne attackers receive all of it.
   groundRecoil: 0.15,
+  // Bounciness (0 = dead stop, 1 = perfectly elastic) of the stage walls and of
+  // fighters colliding. Impacts slower than bounceMinSpeed (px/s) don't bounce.
+  wallBounce: 0.5,
+  bodyBounce: 0.4,
+  bounceMinSpeed: 80,
   knockdownTicks: 40,
   maxQueue: 4,
 };

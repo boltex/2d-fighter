@@ -1,5 +1,6 @@
 import { getMoveSet } from "../data/movesets";
 import type { Renderer } from "../rendering/Renderer";
+import { resolveBodies } from "./Bodies";
 import { resolveHits } from "./Combat";
 import { Fighter } from "./Fighter";
 import { InputManager } from "./Input";
@@ -75,6 +76,7 @@ export class FightScene implements Scene {
 
     a.tick();
     b.tick();
+    resolveBodies(a, b);
 
     for (const i of resolveHits(this.fighters)) {
       // Getting hit cancels any half-entered command.

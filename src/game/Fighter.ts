@@ -7,6 +7,10 @@ export const MAX_HEALTH = 100;
 
 export type FighterState = "idle" | "acting" | "hitstun" | "knockdown";
 
+export function bounceVelocity(v: number, restitution: number): number {
+  return Math.abs(v) < PHYSICS.bounceMinSpeed ? 0 : -v * restitution;
+}
+
 export interface ActiveMove {
   name: Move;
   def: MoveDef;
@@ -26,6 +30,11 @@ export class Fighter {
   queue: Move[] = [];
   lastMove: Move | null = null;
   readonly width = 60;
+
+  // Solid body used to stop fighters passing through each other (not the hurtboxes).
+  get bodyHeight(): number {
+    return this.state === "knockdown" ? 40 : 120;
+  }
 
   private stunTimer = 0;
   private airborneSinceHit = false;
@@ -184,10 +193,19 @@ export class Fighter {
       const slow = Math.min(Math.abs(this.vx), PHYSICS.groundFriction * STEP);
       this.vx -= Math.sign(this.vx) * slow;
     }
+    this.collideWalls();
+  }
+
+  // Keeps the body inside the stage and bounces it off the side walls. Slow impacts
+  // just stop, so a fighter resting against a wall doesn't jitter.
+  collideWalls(): void {
     const half = this.width / 2;
-    if (this.x < half || this.x > STAGE_WIDTH - half) {
-      this.x = Math.max(half, Math.min(STAGE_WIDTH - half, this.x));
-      this.vx = 0;
+    if (this.x < half) {
+      this.x = half;
+      if (this.vx < 0) this.vx = bounceVelocity(this.vx, PHYSICS.wallBounce);
+    } else if (this.x > STAGE_WIDTH - half) {
+      this.x = STAGE_WIDTH - half;
+      if (this.vx > 0) this.vx = bounceVelocity(this.vx, PHYSICS.wallBounce);
     }
   }
 
