@@ -10,14 +10,18 @@ export class Renderer {
     this.ctx = ctx;
   }
 
-  render(fighters: Fighter[]): void {
+  render(fighters: Fighter[], labels: string[] = []): void {
     const { ctx, canvas } = this;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#334";
     ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
-    for (const f of fighters) {
+    ctx.font = "20px monospace";
+    ctx.textAlign = "center";
+    fighters.forEach((f, i) => {
       ctx.fillStyle = f.color;
       ctx.fillRect(f.x - f.width / 2, f.y - f.height, f.width, f.height);
-    }
+      ctx.fillStyle = "#fff";
+      ctx.fillText(labels[i] ?? "", f.x, f.y - f.height - 10);
+    });
   }
 }
