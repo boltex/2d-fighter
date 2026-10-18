@@ -50,19 +50,19 @@ export class Renderer {
     this.ctx.fillRect(0, GROUND_Y, this.width, this.height - GROUND_Y);
   }
 
-  fighter(f: Fighter, label: string): void {
+  fighter(f: Fighter, label: string, queueLabel: string): void {
     const { ctx } = this;
-    ctx.fillStyle = f.color;
-    ctx.fillRect(f.x - f.width / 2, f.y - f.height, f.width, f.height);
+    const body = f.state === "hitstun" ? "#ffe9a0" : f.color;
+    ctx.globalAlpha = f.state === "knockdown" ? 0.6 : 1;
+    ctx.fillStyle = body;
+    for (const b of f.hurtboxes()) ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.globalAlpha = 1;
 
-    if (f.attackTimer > 0) {
-      const reach = 50;
-      const top = f.attackMove === "down-towards" ? f.y - 30 : f.y - f.height * 0.8;
-      const left = f.facing === 1 ? f.x + f.width / 2 : f.x - f.width / 2 - reach;
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(left, top, reach, 16);
-    }
-    this.text(label, f.x, f.y - f.height - 10, { size: 20 });
+    ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+    for (const b of f.hitboxes()) ctx.fillRect(b.x, b.y, b.w, b.h);
+
+    this.text(label, f.x, f.y - 135, { size: 20 });
+    this.text(queueLabel, f.x, f.y + 24, { size: 16, color: "#aab" });
   }
 
   healthBar(f: Fighter, side: "left" | "right"): void {
