@@ -5,7 +5,7 @@ export const STAGE_WIDTH = 960;
 export const TICKS_PER_SECOND = 60;
 export const STEP = 1 / TICKS_PER_SECOND;
 
-// Tunable at runtime (the playtesting-tools milestone will expose these).
+// Tunable at runtime (exposed by the dev-only playtest panel).
 export const PHYSICS = {
   gravity: 2400,
   groundFriction: 2500,
@@ -19,4 +19,12 @@ export const PHYSICS = {
   bounceMinSpeed: 80,
   knockdownTicks: 40,
   maxQueue: 4,
+};
+
+export const INPUT_TIMING = {
+  // Max time between the first and second press of a move.
+  windowMs: 1000,
+  // A second press this soon after the first is treated as a simultaneous press
+  // (e.g. a stick diagonal) and ignored rather than firing an accidental move.
+  simultaneousMs: 15,
 };

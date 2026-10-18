@@ -1,4 +1,5 @@
 import { getMoveSet } from "../data/movesets";
+import { clearLogs, debug, logEvent } from "../debug/DebugState";
 import type { Renderer } from "../rendering/Renderer";
 import { resolveBodies } from "./Bodies";
 import { resolveHits } from "./Combat";
@@ -6,11 +7,21 @@ import { Fighter } from "./Fighter";
 import { InputManager } from "./Input";
 import { MenuNav } from "./MenuNav";
 import { MoveInput } from "./MoveInput";
-import { STEP, TICKS_PER_SECOND } from "./Physics";
+import { PHYSICS, STEP, TICKS_PER_SECOND } from "./Physics";
 import type { Scene, Session } from "./Scene";
+
+// Playtest hooks are compiled out of production builds.
+const DEV = import.meta.env.DEV;
 
 const ROUND_SECONDS = 60;
 const END_DELAY_TICKS = Math.round(1.5 * TICKS_PER_SECOND);
+
+interface Trace {
+  move: string | null;
+  age: number;
+  length: number;
+  state: string;
+}
 
 export class FightScene implements Scene {
   private fighters: [Fighter, Fighter] | null = null;
@@ -40,30 +51,84 @@ export class FightScene implements Scene {
     this.endTimer = 0;
     this.accumulator = 0;
 
-    this.moveInputs = this.fighters.map((f) => new MoveInput((move) => f.enqueue(move)));
+    this.moveInputs = this.fighters.map(
+      (f, i) =>
+        new MoveInput((move) => {
+          if (DEV) {
+            const note = !f.moveset.moves[move] ? " (undefined)" : f.queue.length >= PHYSICS.maxQueue ? " (queue full)" : "";
+            logEvent(i, `move ${move}${note}`);
+          }
+          f.enqueue(move);
+        }),
+    );
     this.input = new InputManager(this.session.settings.devices, (p) => this.fighters?.[p]?.facing ?? 1);
     this.input.onInput(({ player, action, pressed }) => {
       const f = this.fighters?.[player];
+      if (!pressed || !f) return;
       // Presses are ignored while stunned, and once the round has been decided.
-      if (!pressed || !f || f.stunned || this.ended) return;
+      if (f.stunned || this.ended) {
+        if (DEV) logEvent(player, `press ${action} (ignored: ${this.ended ? "round over" : f.state})`);
+        return;
+      }
+      if (DEV) logEvent(player, `press ${action}`);
       this.moveInputs[player]?.press(action);
     });
     // Keyboard only, so a stray gamepad button can't abandon a match.
     this.nav = new MenuNav((k) => k === "back" && this.session.go("main-menu"), false);
+
+    if (DEV) {
+      clearLogs();
+      debug.target = {
+        fighters: this.fighters,
+        characters: this.session.characters,
+        restart: () => {
+          this.teardown();
+          this.enter();
+        },
+      };
+    }
   }
 
-  exit(): void {
+  private teardown(): void {
     this.input?.dispose();
     this.nav?.dispose();
   }
 
+  exit(): void {
+    this.teardown();
+    if (DEV) {
+      debug.target = null;
+      debug.paused = false;
+      debug.stepRequests = 0;
+    }
+  }
+
   update(dt: number): void {
     this.input?.poll();
-    this.accumulator += dt;
+    if (DEV && debug.paused) {
+      for (; debug.stepRequests > 0; debug.stepRequests--) this.tick();
+      return;
+    }
+    this.accumulator += DEV ? dt * debug.timeScale : dt;
     while (this.accumulator >= STEP) {
       this.accumulator -= STEP;
       this.tick();
     }
+  }
+
+  private trace(f: Fighter): Trace {
+    return { move: f.current?.name ?? null, age: f.current?.age ?? 0, length: f.current?.length ?? 0, state: f.state };
+  }
+
+  // Logs move starts (and the cancels that caused them) and state changes.
+  private logTransitions(f: Fighter, i: number, before: Trace): void {
+    const cur = f.current;
+    if (cur && cur.age === 0) {
+      const cancelled = before.move !== null && before.age + 1 < before.length;
+      const note = cancelled ? ` (cancelled ${before.move} at ${before.age + 1}/${before.length})` : "";
+      logEvent(i, `start ${cur.name}${note}`);
+    }
+    if (f.state !== before.state) logEvent(i, `state ${before.state} > ${f.state}`);
   }
 
   private tick(): void {
@@ -74,15 +139,26 @@ export class FightScene implements Scene {
     if (a.canTurn) a.facing = b.x >= a.x ? 1 : -1;
     if (b.canTurn) b.facing = a.x >= b.x ? 1 : -1;
 
+    const before = DEV ? [this.trace(a), this.trace(b)] : [];
     a.tick();
     b.tick();
+    if (DEV) {
+      this.logTransitions(a, 0, before[0]!);
+      this.logTransitions(b, 1, before[1]!);
+    }
     resolveBodies(a, b);
 
-    for (const i of resolveHits(this.fighters)) {
+    for (const hit of resolveHits(this.fighters)) {
       // Getting hit cancels any half-entered command.
-      this.moveInputs[i]?.reset();
+      this.moveInputs[hit.defender]?.reset();
+      if (DEV) {
+        logEvent(hit.attacker, `hit landed: ${hit.move}`);
+        logEvent(hit.defender, `got hit by ${hit.move} (-${hit.damage} hp, ${hit.hitstun}t stun)`);
+      }
     }
+    if (DEV) debug.tick++;
 
+    if (DEV && debug.endless) return;
     if (!this.ended) {
       this.timeLeft = Math.max(0, this.timeLeft - 1);
       this.checkRoundEnd(a, b);
@@ -130,5 +206,18 @@ export class FightScene implements Scene {
     r.text(String(seconds), r.width / 2, 62, { size: 44, color: seconds <= 10 ? "#ff7766" : "#fff" });
     if (this.ended) r.text(this.banner, r.width / 2, r.height / 2 - 60, { size: 80, color: "#ffd84a" });
     r.text("Esc: quit to menu", r.width / 2, r.height - 12, { size: 14, color: "#778" });
+
+    if (DEV) {
+      if (debug.boxes) this.fighters?.forEach((f) => r.debugFighter(f));
+      const flags = [
+        `tick ${debug.tick}`,
+        `x${debug.timeScale.toFixed(2)}`,
+        debug.paused ? "PAUSED" : "",
+        debug.endless ? "ENDLESS" : "",
+      ].filter(Boolean);
+      if (debug.paused || debug.boxes || debug.endless || debug.timeScale !== 1) {
+        r.text(flags.join("  "), 12, r.height - 12, { size: 14, color: "#7fdcff", align: "left" });
+      }
+    }
   }
 }

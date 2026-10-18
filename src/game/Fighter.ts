@@ -44,7 +44,7 @@ export class Fighter {
     readonly color: string,
     readonly name: string,
     readonly moveset: MoveSet,
-    readonly mass = 1,
+    public mass = 1,
   ) {}
 
   get grounded(): boolean {
