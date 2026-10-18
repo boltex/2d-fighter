@@ -34,6 +34,8 @@ export class Results implements Scene {
     r.text("GAME OVER", r.width / 2, 120, { size: 64, color: "#ffd84a" });
     if (winner && w !== null) {
       r.text(`Player ${w + 1} (${winner.name}) wins!`, r.width / 2, 200, { size: 34, color: winner.color });
+    } else {
+      r.text("It's a draw!", r.width / 2, 200, { size: 34 });
     }
     r.list(this.items, this.selected, 320);
   }

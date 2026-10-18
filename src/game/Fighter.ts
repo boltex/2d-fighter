@@ -93,6 +93,13 @@ export class Fighter {
     this.vy += this.grounded ? Math.min(0, ry) : ry;
   }
 
+  // Drops the move in progress and every pre-input (used when a round ends).
+  clearActions(): void {
+    this.current = null;
+    this.queue = [];
+    if (this.state === "acting") this.state = "idle";
+  }
+
   hurtboxes(): Box[] {
     const frame = this.current ? frameAt(this.current.def, this.current.age) : null;
     return this.toWorld(frame?.hurtboxes ?? this.moveset.stances[this.stance()].hurtboxes);

@@ -6,7 +6,7 @@ export type Move = `${Action}-${Action}`;
 const DEFAULT_WINDOW_MS = 1000;
 // A second press this soon after the first is treated as a simultaneous press
 // (e.g. a stick diagonal) and ignored rather than firing an accidental move.
-const SIMULTANEOUS_MS = 30;
+const SIMULTANEOUS_MS = 15;
 
 export class MoveInput {
   private first: Action | null = null;

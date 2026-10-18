@@ -8,7 +8,7 @@ export type SceneName = "main-menu" | "input-select" | "character-select" | "fig
 export interface Session {
   settings: Settings;
   characters: [Character, Character];
-  winner: number | null;
+  winner: number | null; // null means a draw
   go(name: SceneName): void;
 }
 
