@@ -1,24 +1,42 @@
+import { CharacterSelect } from "../ui/CharacterSelect";
+import { InputSelect } from "../ui/InputSelect";
+import { MainMenu } from "../ui/MainMenu";
+import { Results } from "../ui/Results";
 import { Renderer } from "../rendering/Renderer";
-import { Fighter } from "./Fighter";
-import { InputManager, type DeviceAssignment } from "./Input";
-import { MoveInput } from "./MoveInput";
+import { CHARACTERS } from "./Characters";
+import { FightScene } from "./FightScene";
+import type { Scene, SceneName, Session } from "./Scene";
+import { loadSettings } from "./Settings";
 
 const MAX_DT = 1 / 30;
 
+// Owns the game loop and the current scene (a simple state machine).
 export class Game {
   private renderer: Renderer;
-  private input: InputManager;
-  private fighters: Fighter[] = [new Fighter(240, "#e74c3c"), new Fighter(720, "#3498db")];
-  private moveInputs: MoveInput[];
+  private session: Session;
+  private factories: Record<SceneName, () => Scene>;
+  private current: Scene | null = null;
+  private pending: SceneName | null = "main-menu";
   private last = 0;
 
-  constructor(canvas: HTMLCanvasElement, assignments: DeviceAssignment[]) {
+  constructor(canvas: HTMLCanvasElement) {
     this.renderer = new Renderer(canvas);
-    this.moveInputs = this.fighters.map((f) => new MoveInput((move) => f.perform(move)));
-    this.input = new InputManager(assignments, (p) => this.fighters[p]?.facing ?? 1);
-    this.input.onInput(({ player, action, pressed }) => {
-      if (pressed) this.moveInputs[player]?.press(action);
-    });
+    this.session = {
+      settings: loadSettings(),
+      characters: [CHARACTERS[0]!, CHARACTERS[1]!],
+      winner: null,
+      go: (name) => {
+        this.pending = name;
+      },
+    };
+    const s = this.session;
+    this.factories = {
+      "main-menu": () => new MainMenu(s),
+      "input-select": () => new InputSelect(s),
+      "character-select": () => new CharacterSelect(s),
+      fight: () => new FightScene(s),
+      results: () => new Results(s),
+    };
   }
 
   start(): void {
@@ -32,19 +50,15 @@ export class Game {
     const dt = Math.min((now - this.last) / 1000, MAX_DT);
     this.last = now;
 
-    this.input.poll();
-    const [a, b] = this.fighters;
-    if (a && b) {
-      a.facing = b.x >= a.x ? 1 : -1;
-      b.facing = a.x >= b.x ? 1 : -1;
+    // Scene changes are applied between frames so a scene never swaps mid-update.
+    if (this.pending) {
+      this.current?.exit();
+      this.current = this.factories[this.pending]();
+      this.pending = null;
+      this.current.enter();
     }
-    for (const f of this.fighters) f.update(dt);
-
-    const labels = this.fighters.map((f, i) => {
-      const pending = this.moveInputs[i]?.pending();
-      return pending ? `${pending} …` : (f.lastMove ?? "");
-    });
-    this.renderer.render(this.fighters, labels);
+    this.current?.update(dt);
+    this.current?.render(this.renderer);
     requestAnimationFrame(this.loop);
   };
 }

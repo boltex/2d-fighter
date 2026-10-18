@@ -129,6 +129,12 @@ export class InputManager {
     for (const d of this.devices) d?.poll?.();
   }
 
+  dispose(): void {
+    for (const d of this.devices) d?.dispose();
+    this.devices = [];
+    this.listeners = [];
+  }
+
   private handle(player: number, dir: Direction, pressed: boolean): void {
     const held = this.held[player];
     if (!held) return;
