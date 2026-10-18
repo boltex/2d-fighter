@@ -141,9 +141,11 @@ export class Fighter {
         this.start(next, def);
         return;
       }
-      // An unusable move (e.g. a jump while airborne) waits behind the current
-      // move, then is dropped once the fighter is free to act.
+      // A move that needs the ground waits for landing, in queue order. A move that
+      // can't be done in the current state any other way is dropped once the fighter
+      // is free to act.
       if (this.state === "acting") return;
+      if (def?.requires === "grounded" && !this.grounded) return;
       this.queue.shift();
     }
   }
