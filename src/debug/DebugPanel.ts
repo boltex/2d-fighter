@@ -139,6 +139,15 @@ function boxesEditor(parent: HTMLElement, syncs: Sync[], title: string, boxes: B
 }
 
 function moveEditor(parent: HTMLElement, syncs: Sync[], def: MoveDef): void {
+  const nameRow = h("div", "row");
+  nameRow.append(h("span", "", "name"));
+  const nameInput = h("input");
+  nameInput.type = "text";
+  nameInput.value = def.name;
+  nameInput.addEventListener("input", () => (def.name = nameInput.value));
+  nameRow.append(nameInput);
+  parent.append(nameRow);
+
   const req = h("div", "row");
   req.append(h("span", "", "requires"));
   select(req, ["grounded", "airborne", "any"], def.requires, (v) => (def.requires = v as MoveDef["requires"]));

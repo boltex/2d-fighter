@@ -45,7 +45,8 @@ export class Fighter {
     readonly name: string,
     readonly moveset: MoveSet,
     public mass = 1,
-  ) {}
+    public canHover = false
+  ) { }
 
   get grounded(): boolean {
     return this.y >= GROUND_Y;
@@ -62,6 +63,10 @@ export class Fighter {
 
   get canTurn(): boolean {
     return this.state === "idle" && this.grounded;
+  }
+
+  moveLabel(move: Move): string {
+    return this.moveset.moves[move]?.name ?? move;
   }
 
   enqueue(move: Move): void {
@@ -175,8 +180,13 @@ export class Fighter {
   }
 
   private start(name: Move, def: MoveDef): void {
-    if (def.velocity?.x !== undefined) this.vx = def.velocity.x * this.facing;
-    if (def.velocity?.y !== undefined) this.vy = def.velocity.y;
+
+    if (this.grounded || this.canHover) {
+      if (def.velocity?.x !== undefined) this.vx = def.velocity.x * this.facing;
+      if (def.velocity?.y !== undefined) this.vy = def.velocity.y;
+    }
+
+
     this.current = { name, def, age: 0, length: moveLength(def), hasHit: false };
     this.state = "acting";
     this.lastMove = name;

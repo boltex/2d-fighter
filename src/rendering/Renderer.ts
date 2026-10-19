@@ -102,7 +102,7 @@ export class Renderer {
     ctx.fillRect(f.x + f.facing * 14 - 2, f.y - f.bodyHeight - 6, 4, 6);
 
     const move = f.current;
-    const info = move ? `${move.name} ${move.age}/${move.length}` : f.state;
+    const info = move ? `${f.moveLabel(move.name)} ${move.age}/${move.length}` : f.state;
     this.text(`${info}  v(${f.vx.toFixed(0)},${f.vy.toFixed(0)})`, f.x, f.y + 40, { size: 12, color: "#7fdcff" });
   }
 

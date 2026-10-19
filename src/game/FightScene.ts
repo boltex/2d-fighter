@@ -40,8 +40,8 @@ export class FightScene implements Scene {
 
   enter(): void {
     const [c1, c2] = this.session.characters;
-    const a = new Fighter(240, c1.color, c1.name, getMoveSet(c1.moveset), c1.mass);
-    const b = new Fighter(720, c2.color, c2.name, getMoveSet(c2.moveset), c2.mass);
+    const a = new Fighter(240, c1.color, c1.name, getMoveSet(c1.moveset), c1.mass, c1.canHover);
+    const b = new Fighter(720, c2.color, c2.name, getMoveSet(c2.moveset), c2.mass, c2.canHover);
     b.facing = -1;
     this.fighters = [a, b];
     this.ended = false;
@@ -197,8 +197,8 @@ export class FightScene implements Scene {
     r.stage();
     this.fighters?.forEach((f, i) => {
       const pending = this.moveInputs[i]?.pending();
-      const top = f.current?.name ?? (f.stunned ? f.state : "");
-      const queued = [...(pending ? [`${pending} ...`] : []), ...f.queue].join(" > ");
+      const top = f.current ? f.moveLabel(f.current.name) : f.stunned ? f.state : "";
+      const queued = [...(pending ? [`${pending} ...`] : []), ...f.queue.map((m) => f.moveLabel(m))].join(" > ");
       r.fighter(f, top, queued);
       r.healthBar(f, i === 0 ? "left" : "right");
     });
