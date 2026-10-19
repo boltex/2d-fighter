@@ -7,6 +7,7 @@
   },
   "moves": {
     "up-up": {
+      "name": "Vertical jump",
       "requires": "grounded",
       "velocity": { "x": 0, "y": -900 },
       "frames": [{ "duration": 6, "sprite": "jump.png" }],
@@ -16,6 +17,7 @@
       ]
     },
     "towards-up": {
+      "name": "Forward jump",
       "requires": "grounded",
       "velocity": { "x": 320, "y": -900 },
       "frames": [{ "duration": 6, "sprite": "jump.png" }],
@@ -25,6 +27,7 @@
       ]
     },
     "away-up": {
+      "name": "Backward jump",
       "requires": "grounded",
       "velocity": { "x": -320, "y": -900 },
       "frames": [{ "duration": 6, "sprite": "jump.png" }],
@@ -34,6 +37,7 @@
       ]
     },
     "towards-towards": {
+      "name": "Forward hop",
       "requires": "grounded",
       "velocity": { "x": 500 },
       "frames": [{ "duration": 12, "sprite": "hop.png" }],
@@ -43,12 +47,14 @@
       ]
     },
     "away-away": {
+      "name": "Backward hop",
       "requires": "grounded",
       "velocity": { "x": -500 },
       "frames": [{ "duration": 12, "sprite": "hop.png" }],
       "cancelable": [{ "move": "up-up", "percent": 40 }]
     },
     "up-towards": {
+      "name": "Uppercut",
       "requires": "any",
       "frames": [
         { "duration": 6, "sprite": "uppercut_0.png" },
@@ -71,6 +77,7 @@
       "cancelable": [{ "move": "down-towards", "percent": 25 }]
     },
     "down-towards": {
+      "name": "Sweep",
       "requires": "any",
       "frames": [
         { "duration": 8, "sprite": "sweep_0.png" },

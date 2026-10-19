@@ -49,6 +49,7 @@ export interface Cancel {
 }
 
 export interface MoveDef {
+  name: string; // human-readable name of the move
   requires: "grounded" | "airborne" | "any";
   // Velocity set when the move starts. x is mirrored by facing; omitted axes are kept.
   velocity?: { x?: number; y?: number };
